@@ -16,7 +16,7 @@ export const createApp = (): Express => {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: env.CLIENT_URL }));
+  app.use(cors({ origin: env.CLIENT_URLS }));
   app.use(express.json());
   app.use(pinoHttp({ logger }));
 

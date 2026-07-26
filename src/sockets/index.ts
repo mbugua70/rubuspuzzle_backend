@@ -19,7 +19,7 @@ export type AppIO = Server<
 
 export const initSocket = (httpServer: HttpServer): AppIO => {
   const io: AppIO = new Server(httpServer, {
-    cors: { origin: env.CLIENT_URL },
+    cors: { origin: env.CLIENT_URLS },
   });
 
   io.on("connection", (socket) => {

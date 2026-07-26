@@ -24,5 +24,14 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-export const env = parsed.data;
+// CLIENT_URL may be a single origin or a comma-separated list (e.g. separate
+// facilitator/display frontend domains in production).
+const clientUrls = parsed.data.CLIENT_URL.split(",")
+  .map((url) => url.trim())
+  .filter((url) => url.length > 0);
+
+export const env = {
+  ...parsed.data,
+  CLIENT_URLS: clientUrls,
+};
 export type Env = typeof env;

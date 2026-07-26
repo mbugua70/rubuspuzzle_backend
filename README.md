@@ -33,7 +33,7 @@ cp .env.example .env
 | `PORT` | HTTP port the server listens on | `5000` |
 | `NODE_ENV` | `development` \| `production` \| `test` | `development` |
 | `MONGO_URI` | MongoDB connection string (local or Atlas) | see below |
-| `CLIENT_URL` | Origin allowed by CORS/Socket.IO (the frontend) | `http://localhost:5173` |
+| `CLIENT_URL` | Origin(s) allowed by CORS/Socket.IO. Comma-separated if the facilitator and display frontends are on different domains | `http://localhost:5173` or `https://facilitator.example.com,https://display.example.com` |
 | `LOG_LEVEL` | Pino log level | `info` |
 
 `env.ts` validates these with Zod at startup — the process exits
