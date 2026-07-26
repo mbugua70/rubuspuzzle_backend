@@ -3,9 +3,11 @@ import { createApp } from "./app";
 import { connectDatabase, disconnectDatabase } from "./config/database";
 import { env } from "./config/env";
 import { logger } from "./logger/logger";
+import { initSocket } from "./sockets";
 
 const app = createApp();
 const server = http.createServer(app);
+const io = initSocket(server);
 
 const start = async (): Promise<void> => {
   await connectDatabase();
@@ -17,7 +19,7 @@ const start = async (): Promise<void> => {
 
 const shutdown = (signal: string): void => {
   logger.info(`Received ${signal}, shutting down gracefully`);
-  server.close(() => {
+  io.close(() => {
     void disconnectDatabase().finally(() => process.exit(0));
   });
 };

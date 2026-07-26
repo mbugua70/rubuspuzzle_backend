@@ -10,3 +10,6 @@ export const GAME_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 /** Safety cap on collision-retry attempts when generating a game code. */
 export const GAME_CODE_MAX_ATTEMPTS = 10;
+
+/** Floor applied when resuming, in case a facilitator paused very late. */
+export const MIN_RESUME_REMAINING_MS = 1_000;

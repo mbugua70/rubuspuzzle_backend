@@ -1,7 +1,7 @@
 import { POINTS_PER_CORRECT, QUESTION_DURATION_MS } from "../config/constants";
 import { logger } from "../logger/logger";
 import { GameSession, GameSessionDocument } from "../models/GameSession";
-import { GameStatePayload, GameStatus } from "../types/game.types";
+import { GameStatePayload, GameStatus, Role } from "../types/game.types";
 import { AppError } from "../utils/AppError";
 import { generateUniqueGameCode } from "../utils/gameCode";
 
@@ -88,6 +88,21 @@ export const deleteGame = async (gameCode: string): Promise<void> => {
     throw new AppError("Game not found", 404);
   }
   logger.info({ gameCode }, "Game deleted");
+};
+
+export const setConnectionStatus = async (
+  gameCode: string,
+  role: Role,
+  connected: boolean
+): Promise<GameStatePayload> => {
+  const doc = await findSessionOrThrow(gameCode);
+  if (role === "facilitator") {
+    doc.facilitatorConnected = connected;
+  } else {
+    doc.displayConnected = connected;
+  }
+  await doc.save();
+  return toGameStatePayload(doc);
 };
 
 export const startGame = async (
