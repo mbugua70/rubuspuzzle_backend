@@ -7,6 +7,7 @@ import { env } from "./config/env";
 import { logger } from "./logger/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
+import gameRoutes from "./routes/game.routes";
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 300;
@@ -32,6 +33,8 @@ export const createApp = (): Express => {
   app.get("/api/health", (_req, res) => {
     res.status(200).json({ status: "ok" });
   });
+
+  app.use("/api/game-sessions", gameRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
