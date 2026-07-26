@@ -1,0 +1,28 @@
+import dotenv from "dotenv";
+import { z } from "zod";
+import { logger } from "../logger/logger";
+
+dotenv.config({ quiet: true });
+
+const envSchema = z.object({
+  PORT: z.coerce.number().int().positive().default(5000),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  MONGO_URI: z.string().min(1, "MONGO_URI is required"),
+  CLIENT_URL: z.string().min(1, "CLIENT_URL is required"),
+  LOG_LEVEL: z
+    .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+    .default("info"),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  logger.error(
+    { issues: parsed.error.issues },
+    "Invalid environment configuration"
+  );
+  process.exit(1);
+}
+
+export const env = parsed.data;
+export type Env = typeof env;
