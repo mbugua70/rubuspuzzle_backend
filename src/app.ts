@@ -27,6 +27,12 @@ export const createApp = (): Express => {
       limit: RATE_LIMIT_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
+      handler: (_req, res) => {
+        res.status(429).json({
+          success: false,
+          message: "Too many requests, please try again later",
+        });
+      },
     })
   );
 

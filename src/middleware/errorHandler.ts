@@ -18,6 +18,10 @@ export const errorHandler = (
   } else if (err instanceof ZodError) {
     statusCode = 400;
     message = err.issues.map((issue) => issue.message).join(", ");
+  } else if (err instanceof SyntaxError && "body" in err) {
+    // express.json()'s body-parser throws this on malformed JSON payloads
+    statusCode = 400;
+    message = "Malformed JSON in request body";
   } else if (err instanceof Error) {
     message = err.message;
   }
