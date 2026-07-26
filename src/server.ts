@@ -1,3 +1,4 @@
+import "./utils/cryptoPolyfill";
 import http from "http";
 import { createApp } from "./app";
 import { connectDatabase, disconnectDatabase } from "./config/database";
