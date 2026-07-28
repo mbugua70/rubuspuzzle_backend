@@ -49,6 +49,11 @@ export const skipPuzzleSchema = z.object({
   gameCode: gameCodeSchema,
 });
 
+// Socket: game:retry
+export const retryPuzzleSchema = z.object({
+  gameCode: gameCodeSchema,
+});
+
 // Socket: game:restart
 export const restartGameSchema = z.object({
   gameCode: gameCodeSchema,
@@ -72,6 +77,7 @@ export type StartGameInput = z.infer<typeof startGameSchema>;
 export type PauseGameInput = z.infer<typeof pauseGameSchema>;
 export type ResumeGameInput = z.infer<typeof resumeGameSchema>;
 export type SkipPuzzleInput = z.infer<typeof skipPuzzleSchema>;
+export type RetryPuzzleInput = z.infer<typeof retryPuzzleSchema>;
 export type RestartGameInput = z.infer<typeof restartGameSchema>;
 export type EndGameInput = z.infer<typeof endGameSchema>;
 export type JudgeAnswerInput = z.infer<typeof judgeAnswerSchema>;

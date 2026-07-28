@@ -27,6 +27,7 @@ export interface ClientToServerEvents {
   "game:pause": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:resume": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:skip": (payload: GameCodePayload, callback?: AckCallback) => void;
+  "game:retry": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:restart": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:end": (payload: GameCodePayload, callback?: AckCallback) => void;
 }

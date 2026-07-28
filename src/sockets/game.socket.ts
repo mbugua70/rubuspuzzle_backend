@@ -18,6 +18,7 @@ import {
   pauseGameSchema,
   resumeGameSchema,
   restartGameSchema,
+  retryPuzzleSchema,
   skipPuzzleSchema,
   startGameSchema,
 } from "../validators/game.validator";
@@ -186,6 +187,19 @@ export const registerGameHandlers = (io: AppServer, socket: AppSocket): void => 
       if (state.status === "playing") {
         scheduleQuestionTimeout(io, gameCode, state.questionEndsAt);
       }
+    })
+  );
+
+  socket.on("game:retry", (payload, callback) =>
+    withErrorHandling(callback, async () => {
+      const { gameCode } = retryPuzzleSchema.parse(payload);
+      assertFacilitator(socket, gameCode);
+
+      timerManager.clear(gameCode);
+      const state = await gameService.retryPuzzle(gameCode);
+      ok(callback, state);
+      broadcastState(io, state);
+      scheduleQuestionTimeout(io, gameCode, state.questionEndsAt);
     })
   );
 

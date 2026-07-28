@@ -190,6 +190,29 @@ export const skipPuzzle = async (
   return toGameStatePayload(doc);
 };
 
+const RETRYABLE_STATUSES: GameStatus[] = ["wrong", "timeout"];
+
+/**
+ * Replays the current puzzle for the next player in line - used when the
+ * answer was wrong or the timer ran out, so only a correct answer (via
+ * skipPuzzle/nextPuzzle) advances the puzzle index.
+ */
+export const retryPuzzle = async (
+  gameCode: string
+): Promise<GameStatePayload> => {
+  const doc = await findSessionOrThrow(gameCode);
+  assertStatus(doc, RETRYABLE_STATUSES, "retry the puzzle");
+
+  doc.status = "playing";
+  doc.currentPuzzleAnswered = false;
+  doc.questionStartedAt = new Date();
+  doc.questionEndsAt = new Date(Date.now() + QUESTION_DURATION_MS);
+
+  await doc.save();
+  logger.info({ gameCode }, "Puzzle retried for next player");
+  return toGameStatePayload(doc);
+};
+
 export const nextPuzzle = async (
   gameCode: string
 ): Promise<GameStatePayload> => {
