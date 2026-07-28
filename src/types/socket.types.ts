@@ -6,6 +6,10 @@ export type AckResponse =
 
 export type AckCallback = (response: AckResponse) => void;
 
+export type SimpleAckResponse = { success: true } | { success: false; message: string };
+
+export type SimpleAckCallback = (response: SimpleAckResponse) => void;
+
 export interface JoinPayload {
   gameCode: string;
   role: Role;
@@ -20,6 +24,16 @@ export interface JudgePayload {
   result: "correct" | "wrong";
 }
 
+/**
+ * gameCode is the OLD game the facilitator (and display) are currently in;
+ * newGameCode is where the display should be redirected to. Purely a
+ * broadcast signal - no game state is read or written for either code.
+ */
+export interface RedirectDisplayPayload {
+  gameCode: string;
+  newGameCode: string;
+}
+
 export interface ClientToServerEvents {
   "game:join": (payload: JoinPayload, callback?: AckCallback) => void;
   "game:start": (payload: GameCodePayload, callback?: AckCallback) => void;
@@ -30,10 +44,12 @@ export interface ClientToServerEvents {
   "game:retry": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:restart": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:end": (payload: GameCodePayload, callback?: AckCallback) => void;
+  "game:redirect-display": (payload: RedirectDisplayPayload, callback?: SimpleAckCallback) => void;
 }
 
 export interface ServerToClientEvents {
   "game:state": (payload: GameStatePayload) => void;
+  "display:redirect": (payload: { newGameCode: string }) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

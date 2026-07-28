@@ -16,6 +16,7 @@ import {
   joinSchema,
   judgeAnswerSchema,
   pauseGameSchema,
+  redirectDisplaySchema,
   resumeGameSchema,
   restartGameSchema,
   retryPuzzleSchema,
@@ -202,6 +203,27 @@ export const registerGameHandlers = (io: AppServer, socket: AppSocket): void => 
       scheduleQuestionTimeout(io, gameCode, state.questionEndsAt);
     })
   );
+
+  // Pure broadcast: no game state is read or written for either code, it
+  // just tells whatever display is sitting in the OLD game's room to
+  // navigate itself to the NEW one - the display never needs to be touched.
+  socket.on("game:redirect-display", (payload, callback) => {
+    void (async () => {
+      try {
+        const { gameCode, newGameCode } = redirectDisplaySchema.parse(payload);
+        assertFacilitator(socket, gameCode);
+        await gameService.getGame(newGameCode);
+
+        io.to(roomName(gameCode)).emit("display:redirect", { newGameCode });
+        callback?.({ success: true });
+      } catch (err) {
+        if (!(err instanceof AppError)) {
+          logger.error({ err }, "Unhandled socket error");
+        }
+        callback?.({ success: false, message: extractErrorMessage(err) });
+      }
+    })();
+  });
 
   socket.on("game:restart", (payload, callback) =>
     withErrorHandling(callback, async () => {
