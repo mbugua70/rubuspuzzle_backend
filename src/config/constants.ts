@@ -1,5 +1,5 @@
 /** How long a puzzle stays active before it auto-times-out. */
-export const QUESTION_DURATION_MS = 30_000;
+export const QUESTION_DURATION_MS = 15_000;
 
 /** Points added to the score for each correctly judged puzzle. */
 export const POINTS_PER_CORRECT = 10;
