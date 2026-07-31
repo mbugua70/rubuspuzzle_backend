@@ -8,6 +8,8 @@ import { logger } from "./logger/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
 import gameRoutes from "./routes/game.routes";
+import playerRoutes from "./routes/player.routes";
+import scoreRoutes from "./routes/score.routes";
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 300;
@@ -41,6 +43,11 @@ export const createApp = (): Express => {
   });
 
   app.use("/api/game-sessions", gameRoutes);
+
+  // Self-service Rubus Puzzle kiosk game (online_rubuspuzzle) - no
+  // facilitator, no socket sync, unrelated to the game-sessions routes above.
+  app.use("/api/players", playerRoutes);
+  app.use("/api/scores", scoreRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
