@@ -5,6 +5,7 @@ export const GAME_STATUSES = [
   "correct",
   "wrong",
   "timeout",
+  "revealed",
   "paused",
   "finished",
 ] as const;
@@ -28,6 +29,7 @@ export interface GameStatePayload {
   wrongCount: number;
   skippedCount: number;
   timeoutCount: number;
+  revealedCount: number;
   currentPuzzleAnswered: boolean;
   questionStartedAt: string | null;
   questionEndsAt: string | null;

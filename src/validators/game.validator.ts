@@ -76,6 +76,11 @@ export const judgeAnswerSchema = z.object({
   result: z.enum(["correct", "wrong"]),
 });
 
+// Socket: game:reveal
+export const revealAnswerSchema = z.object({
+  gameCode: gameCodeSchema,
+});
+
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
 export type GameCodeParamInput = z.infer<typeof gameCodeParamSchema>;
 export type JoinInput = z.infer<typeof joinSchema>;
@@ -88,3 +93,4 @@ export type RedirectDisplayInput = z.infer<typeof redirectDisplaySchema>;
 export type RestartGameInput = z.infer<typeof restartGameSchema>;
 export type EndGameInput = z.infer<typeof endGameSchema>;
 export type JudgeAnswerInput = z.infer<typeof judgeAnswerSchema>;
+export type RevealAnswerInput = z.infer<typeof revealAnswerSchema>;

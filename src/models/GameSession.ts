@@ -11,6 +11,7 @@ export interface GameSessionDocument extends Document {
   wrongCount: number;
   skippedCount: number;
   timeoutCount: number;
+  revealedCount: number;
   currentPuzzleAnswered: boolean;
   questionStartedAt: Date | null;
   questionEndsAt: Date | null;
@@ -33,6 +34,7 @@ const gameSessionSchema = new Schema<GameSessionDocument>(
     wrongCount: { type: Number, default: 0 },
     skippedCount: { type: Number, default: 0 },
     timeoutCount: { type: Number, default: 0 },
+    revealedCount: { type: Number, default: 0 },
     currentPuzzleAnswered: { type: Boolean, default: false },
     questionStartedAt: { type: Date, default: null },
     questionEndsAt: { type: Date, default: null },

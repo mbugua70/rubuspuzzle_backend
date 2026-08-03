@@ -20,6 +20,7 @@ import {
   resumeGameSchema,
   restartGameSchema,
   retryPuzzleSchema,
+  revealAnswerSchema,
   skipPuzzleSchema,
   startGameSchema,
 } from "../validators/game.validator";
@@ -141,6 +142,18 @@ export const registerGameHandlers = (io: AppServer, socket: AppSocket): void => 
 
       timerManager.clear(gameCode);
       const state = await gameService.judgeAnswer(gameCode, result);
+      ok(callback, state);
+      broadcastState(io, state);
+    })
+  );
+
+  socket.on("game:reveal", (payload, callback) =>
+    withErrorHandling(callback, async () => {
+      const { gameCode } = revealAnswerSchema.parse(payload);
+      assertFacilitator(socket, gameCode);
+
+      timerManager.clear(gameCode);
+      const state = await gameService.revealAnswer(gameCode);
       ok(callback, state);
       broadcastState(io, state);
     })

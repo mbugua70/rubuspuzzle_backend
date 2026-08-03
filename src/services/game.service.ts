@@ -10,6 +10,7 @@ const PUZZLE_ACTIVE_STATUSES: GameStatus[] = [
   "correct",
   "wrong",
   "timeout",
+  "revealed",
 ];
 
 const toGameStatePayload = (doc: GameSessionDocument): GameStatePayload => ({
@@ -23,6 +24,7 @@ const toGameStatePayload = (doc: GameSessionDocument): GameStatePayload => ({
   wrongCount: doc.wrongCount,
   skippedCount: doc.skippedCount,
   timeoutCount: doc.timeoutCount,
+  revealedCount: doc.revealedCount,
   currentPuzzleAnswered: doc.currentPuzzleAnswered,
   questionStartedAt: doc.questionStartedAt?.toISOString() ?? null,
   questionEndsAt: doc.questionEndsAt?.toISOString() ?? null,
@@ -175,6 +177,21 @@ export const judgeAnswer = async (
   return toGameStatePayload(doc);
 };
 
+export const revealAnswer = async (
+  gameCode: string
+): Promise<GameStatePayload> => {
+  const doc = await findSessionOrThrow(gameCode);
+  assertStatus(doc, ["playing"], "reveal the answer");
+
+  doc.currentPuzzleAnswered = true;
+  doc.status = "revealed";
+  doc.revealedCount += 1;
+
+  await doc.save();
+  logger.info({ gameCode }, "Answer revealed");
+  return toGameStatePayload(doc);
+};
+
 export const skipPuzzle = async (
   gameCode: string
 ): Promise<GameStatePayload> => {
@@ -264,6 +281,7 @@ export const restartGame = async (
   doc.wrongCount = 0;
   doc.skippedCount = 0;
   doc.timeoutCount = 0;
+  doc.revealedCount = 0;
   doc.currentPuzzleAnswered = false;
   doc.questionStartedAt = null;
   doc.questionEndsAt = null;
