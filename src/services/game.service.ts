@@ -269,6 +269,29 @@ export const finishGame = async (
   return toGameStatePayload(doc);
 };
 
+const shuffle = <T,>(list: T[]): T[] => {
+  const result = [...list];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j]!, result[i]!];
+  }
+  return result;
+};
+
+/** Reorders the puzzle lineup for the *next* round - only allowed before a round is live. */
+export const shuffleOrder = async (
+  gameCode: string
+): Promise<GameStatePayload> => {
+  const doc = await findSessionOrThrow(gameCode);
+  assertStatus(doc, ["waiting", "finished"], "shuffle the puzzle order");
+
+  doc.puzzleIds = shuffle(doc.puzzleIds);
+
+  await doc.save();
+  logger.info({ gameCode }, "Puzzle order shuffled");
+  return toGameStatePayload(doc);
+};
+
 export const restartGame = async (
   gameCode: string
 ): Promise<GameStatePayload> => {

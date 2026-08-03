@@ -81,6 +81,11 @@ export const revealAnswerSchema = z.object({
   gameCode: gameCodeSchema,
 });
 
+// Socket: game:shuffle
+export const shuffleOrderSchema = z.object({
+  gameCode: gameCodeSchema,
+});
+
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
 export type GameCodeParamInput = z.infer<typeof gameCodeParamSchema>;
 export type JoinInput = z.infer<typeof joinSchema>;
@@ -94,3 +99,4 @@ export type RestartGameInput = z.infer<typeof restartGameSchema>;
 export type EndGameInput = z.infer<typeof endGameSchema>;
 export type JudgeAnswerInput = z.infer<typeof judgeAnswerSchema>;
 export type RevealAnswerInput = z.infer<typeof revealAnswerSchema>;
+export type ShuffleOrderInput = z.infer<typeof shuffleOrderSchema>;

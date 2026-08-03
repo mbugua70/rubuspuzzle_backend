@@ -21,6 +21,7 @@ import {
   restartGameSchema,
   retryPuzzleSchema,
   revealAnswerSchema,
+  shuffleOrderSchema,
   skipPuzzleSchema,
   startGameSchema,
 } from "../validators/game.validator";
@@ -154,6 +155,17 @@ export const registerGameHandlers = (io: AppServer, socket: AppSocket): void => 
 
       timerManager.clear(gameCode);
       const state = await gameService.revealAnswer(gameCode);
+      ok(callback, state);
+      broadcastState(io, state);
+    })
+  );
+
+  socket.on("game:shuffle", (payload, callback) =>
+    withErrorHandling(callback, async () => {
+      const { gameCode } = shuffleOrderSchema.parse(payload);
+      assertFacilitator(socket, gameCode);
+
+      const state = await gameService.shuffleOrder(gameCode);
       ok(callback, state);
       broadcastState(io, state);
     })

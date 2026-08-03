@@ -39,6 +39,7 @@ export interface ClientToServerEvents {
   "game:start": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:judge": (payload: JudgePayload, callback?: AckCallback) => void;
   "game:reveal": (payload: GameCodePayload, callback?: AckCallback) => void;
+  "game:shuffle": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:pause": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:resume": (payload: GameCodePayload, callback?: AckCallback) => void;
   "game:skip": (payload: GameCodePayload, callback?: AckCallback) => void;
