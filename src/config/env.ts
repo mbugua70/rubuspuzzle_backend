@@ -12,6 +12,12 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
+  // Signs/verifies admin dashboard JWTs (src/utils/jwt.ts). Bearer-token
+  // auth rather than a cookie - the admin dashboard and this API are on
+  // different domains, so a session cookie would be third-party and liable
+  // to be blocked by the browser.
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  JWT_EXPIRES_IN: z.string().min(1).default("12h"),
 });
 
 const parsed = envSchema.safeParse(process.env);
