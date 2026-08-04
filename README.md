@@ -35,6 +35,8 @@ cp .env.example .env
 | `MONGO_URI` | MongoDB connection string (local or Atlas) | see below |
 | `CLIENT_URL` | Origin(s) allowed by CORS/Socket.IO. Comma-separated if the facilitator and display frontends are on different domains | `http://localhost:5173` or `https://facilitator.example.com,https://display.example.com` |
 | `LOG_LEVEL` | Pino log level | `info` |
+| `JWT_SECRET` | Signs/verifies admin dashboard bearer tokens (min 32 chars) | generate with `openssl rand -hex 32` |
+| `JWT_EXPIRES_IN` | Admin token lifetime | `12h` |
 
 `env.ts` validates these with Zod at startup — the process exits
 immediately with a logged error if anything required is missing or
@@ -60,11 +62,28 @@ Atlas dashboard's Network Access settings.
 ## Running
 
 ```bash
-npm run dev     # nodemon + tsx, auto-restarts on src/ changes
-npm run build   # tsc -> dist/
-npm run start   # node dist/server.js (run build first)
-npm run lint    # eslint .
+npm run dev         # nodemon + tsx, auto-restarts on src/ changes
+npm run build       # tsc -> dist/
+npm run start       # node dist/server.js (run build first)
+npm run lint        # eslint .
+npm run seed:admin  # create/reset an admin dashboard login (see below)
 ```
+
+### Creating an admin account
+
+There is deliberately no HTTP endpoint to create an admin — the only
+way in is this terminal script, so there's nothing internet-reachable
+to attack to mint an account:
+
+```bash
+npm run seed:admin
+```
+
+Prompts for an email and a masked password (typed twice to confirm).
+Rerunning with the same email resets that admin's password; a
+different email adds another admin. For scripted/non-interactive runs,
+set `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` in the environment instead
+of typing them.
 
 ## Folder structure
 
@@ -75,13 +94,21 @@ src/
 ├── logger/           logger.ts - single Pino instance, pretty in dev / JSON in prod
 ├── types/            game.types.ts (GameStatus, GameStatePayload, Role),
 │                     socket.types.ts (typed Socket.IO event maps)
-├── utils/            AppError, asyncHandler, response envelope, gameCode generator
-├── models/           GameSession.ts (Mongoose schema -> game_sessions collection)
-├── validators/       game.validator.ts - one Zod schema per action
-├── services/         game.service.ts - all game logic and state transitions
-├── controllers/      game.controller.ts - REST request/response glue
-├── middleware/       errorHandler.ts, notFound.ts
-├── routes/           game.routes.ts
+├── utils/            AppError, asyncHandler, response envelope, gameCode generator,
+│                     jwt.ts (admin token sign/verify), csv.ts, dateRange.ts
+│                     (Africa/Nairobi day boundaries for report filters)
+├── models/           GameSession.ts (-> game_sessions), Player.ts, Score.ts, Admin.ts
+├── validators/       game.validator.ts, player.validator.ts, score.validator.ts,
+│                     admin.validator.ts, report.validator.ts - one Zod schema per action
+├── services/         game.service.ts - all game logic and state transitions;
+│                     player.service.ts, score.service.ts, admin.service.ts,
+│                     report.service.ts - the self-service kiosk + admin side
+├── controllers/      game.controller.ts, player.controller.ts, score.controller.ts,
+│                     admin.controller.ts, report.controller.ts - REST glue
+├── middleware/       errorHandler.ts, notFound.ts, requireAdmin.ts (bearer-token gate)
+├── scripts/          seedAdmin.ts - the only way to create an admin login (no HTTP route)
+├── routes/           game.routes.ts, player.routes.ts, score.routes.ts,
+│                     admin.routes.ts, report.routes.ts
 ├── sockets/          index.ts (Socket.IO server setup), game.socket.ts (event
 │                     handlers), timer.manager.ts (question timeout scheduling),
 │                     presence.manager.ts (per-role connection tracking)
@@ -161,6 +188,34 @@ All responses use the envelope `{ success, data?, message? }`.
 | `POST` | `/api/game-sessions` | Create a session. Body: `{ puzzleIds: string[] }`. Returns `{ gameCode, displayUrl, facilitatorUrl }` |
 | `GET` | `/api/game-sessions/:gameCode` | Full current game state |
 | `DELETE` | `/api/game-sessions/:gameCode` | Remove a session |
+
+### Self-service kiosk endpoints (`online_rubuspuzzle`)
+
+Unrelated to the game-sessions endpoints above - no facilitator, no
+Socket.IO, one attempt per staff ID.
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/players/login` | Body: `{ staffId, name }`. Returns `{ playerId, sessionId, staffId, name }`. `409` if that staff ID already played. |
+| `POST` | `/api/scores/submit` | Body: `{ sessionId, playerId, staffId, name, score, correctCount, totalPuzzles, durationMs, answers[] }`. Returns `{ scoreId }`. |
+
+### Admin reporting endpoints
+
+Powers the `/admin` dashboard in `online_rubuspuzzle`. Bearer-token
+auth (`Authorization: Bearer <token>`), not a cookie — the dashboard
+and this API are on different domains, and a cookie there would be
+third-party and liable to browser blocking. Tokens are minted by
+`POST /login` and expire after `JWT_EXPIRES_IN`. The only way to
+create an admin account is `npm run seed:admin` (see above) — there is
+no signup endpoint.
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/admin/auth/login` | none (rate-limited: 10/15min) | Body: `{ email, password }`. Returns `{ token, email }`. |
+| `GET` | `/api/admin/auth/me` | bearer | Validates the stored token. Returns `{ email }`. |
+| `GET` | `/api/admin/reports/players` | bearer | Query: `date` (`YYYY-MM-DD`, Africa/Nairobi), `q` (staffId/name search), `sortBy` (`score` default \| `date`), `sortOrder` (`desc` default \| `asc`), `page`, `limit`. Returns `{ items[], total, page, limit }`. |
+| `GET` | `/api/admin/reports/summary` | bearer | Returns `{ totalPlayers, averageScore, topScore, playDays: [{ date, count }] }` — `playDays` is computed from actual data, not hardcoded event dates. |
+| `GET` | `/api/admin/reports/export` | bearer | Same filters as `/players` (no pagination). Streams a `text/csv` file. |
 
 ## Socket.IO events
 

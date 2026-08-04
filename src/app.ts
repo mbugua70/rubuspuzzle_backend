@@ -7,8 +7,10 @@ import { env } from "./config/env";
 import { logger } from "./logger/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
+import adminRoutes from "./routes/admin.routes";
 import gameRoutes from "./routes/game.routes";
 import playerRoutes from "./routes/player.routes";
+import reportRoutes from "./routes/report.routes";
 import scoreRoutes from "./routes/score.routes";
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
@@ -48,6 +50,13 @@ export const createApp = (): Express => {
   // facilitator, no socket sync, unrelated to the game-sessions routes above.
   app.use("/api/players", playerRoutes);
   app.use("/api/scores", scoreRoutes);
+
+  // Admin reporting dashboard for online_rubuspuzzle (see online_rubuspuzzle's
+  // /admin route) - bearer-token auth, no cookies, since the dashboard and
+  // this API are on different domains. /api/admin/reports/* is gated by
+  // requireAdmin inside report.routes.ts itself.
+  app.use("/api/admin/auth", adminRoutes);
+  app.use("/api/admin/reports", reportRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

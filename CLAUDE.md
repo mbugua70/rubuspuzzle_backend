@@ -5,16 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev     # nodemon + tsx, auto-restarts on src/ changes, connects to MONGO_URI
-npm run build   # tsc -> dist/ (noEmitOnError: strict, must be clean)
-npm run start   # node dist/server.js (run build first)
-npm run lint    # eslint . (flat config, typescript-eslint recommended)
+npm run dev         # nodemon + tsx, auto-restarts on src/ changes, connects to MONGO_URI
+npm run build       # tsc -> dist/ (noEmitOnError: strict, must be clean)
+npm run start       # node dist/server.js (run build first)
+npm run lint        # eslint . (flat config, typescript-eslint recommended)
+npm run seed:admin  # create/reset an admin dashboard login - the only way to get one, no HTTP route does this
 ```
 
 No test suite exists in this repo. `.env` (gitignored) holds `PORT`,
-`NODE_ENV`, `MONGO_URI`, `CLIENT_URL`, `LOG_LEVEL` — see `.env.example`
-for the shape; `src/config/env.ts` validates these with Zod at startup
-and exits the process on failure rather than running half-configured.
+`NODE_ENV`, `MONGO_URI`, `CLIENT_URL`, `LOG_LEVEL`, `JWT_SECRET`,
+`JWT_EXPIRES_IN` — see `.env.example` for the shape; `src/config/env.ts`
+validates these with Zod at startup and exits the process on failure
+rather than running half-configured.
 
 ## Architecture
 
@@ -68,3 +70,47 @@ auto-advance timer.
 
 See `README.md` for the full REST endpoint list, Socket.IO event
 payloads, and env var reference.
+
+## Self-service kiosk + admin reporting (`online_rubuspuzzle`)
+
+This backend also serves a second, unrelated frontend: the
+self-service kiosk game at `online_rubuspuzzle` (`/api/players`,
+`/api/scores` — no facilitator, no Socket.IO, one attempt per staff
+ID, enforced by `Player.hasPlayed` and an atomic
+`findOneAndUpdate`/upsert in `player.service.ts`) and, on top of that,
+an admin reporting dashboard mounted at `online_rubuspuzzle`'s
+`/admin` route (`/api/admin/auth`, `/api/admin/reports`).
+
+**Auth is a bearer JWT, not a cookie.** The kiosk frontend and this
+API are deployed on different domains, so a session cookie would be
+third-party from the browser's perspective and liable to be blocked —
+the admin frontend stores the token client-side and sends
+`Authorization: Bearer <token>` instead. `middleware/requireAdmin.ts`
+verifies the token's signature/expiry only; it does not hit the DB per
+request, so a removed admin's already-issued tokens keep working until
+they expire (`JWT_EXPIRES_IN`) — an accepted trade for a short-lived
+event dashboard with no revocation list.
+
+**There is no HTTP endpoint to create an admin.** The only way in is
+`npm run seed:admin` (`src/scripts/seedAdmin.ts`), run directly on a
+machine with `MONGO_URI` access — this keeps account creation off the
+public internet entirely rather than gating a public endpoint behind a
+bootstrap secret.
+
+**Reporting reads `Score`, not `Player`.** `Player` records a login
+attempt (including someone who logged in but never finished);
+`Score` is only written on a completed playthrough, so
+`report.service.ts`'s `listScores`/`getSummary`/`exportScoresCsv` all
+query `Score` — that's what "how many people played" means to the
+client.
+
+**Day filtering is fixed-offset, not the system timezone.** Africa/Nairobi
+is UTC+3 year-round (no DST), so `utils/dateRange.ts`'s
+`getDayRangeUtc("YYYY-MM-DD")` does exact arithmetic rather than
+depending on the host's timezone or a Mongo version with
+timezone-aware aggregation. `getSummary`'s `playDays` (per-day score
+counts) is computed the same way, via a `$group` aggregation shifting
+`createdAt` by the same fixed offset — this is intentionally *not*
+hardcoded to the event's actual Wed/Thu/Fri dates, so the admin
+dashboard's day-filter chips reflect whatever days the data actually
+has.
