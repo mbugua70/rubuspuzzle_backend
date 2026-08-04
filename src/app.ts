@@ -20,7 +20,16 @@ export const createApp = (): Express => {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: env.CLIENT_URLS }));
+  app.use(
+    cors({
+      origin: env.CLIENT_URLS,
+      // Content-Disposition isn't in the CORS-safelisted response headers,
+      // so without this the admin dashboard's fetch() can read the CSV body
+      // fine but reports/export's filename silently falls back to a default
+      // - see report.controller.ts's exportCsv.
+      exposedHeaders: ["Content-Disposition"],
+    })
+  );
   app.use(express.json());
   app.use(pinoHttp({ logger }));
 
