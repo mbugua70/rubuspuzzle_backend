@@ -12,6 +12,7 @@ import gameRoutes from "./routes/game.routes";
 import playerRoutes from "./routes/player.routes";
 import reportRoutes from "./routes/report.routes";
 import scoreRoutes from "./routes/score.routes";
+import tugwarRoutes from "./routes/tugwar.routes";
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 300;
@@ -66,6 +67,11 @@ export const createApp = (): Express => {
   // requireAdmin inside report.routes.ts itself.
   app.use("/api/admin/auth", adminRoutes);
   app.use("/api/admin/reports", reportRoutes);
+
+  // Tug of War (tug_war) - two-player match registration and results.
+  // Unrelated to every other game mounted above; unlimited replays, no
+  // facilitator/display split, no admin dashboard (yet).
+  app.use("/api/tugwar/matches", tugwarRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
